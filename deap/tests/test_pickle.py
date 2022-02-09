@@ -5,6 +5,7 @@ import array
 import pickle
 import operator
 import platform
+import functools
 
 import numpy
 
@@ -99,7 +100,7 @@ class Pickling(unittest.TestCase):
     def test_pickle_tree_ephemeral(self):
         pset = gp.PrimitiveSetTyped("MAIN", [], int, "IN")
         pset.addPrimitive(operator.add, [int, int], int)
-        pset.addEphemeralConstant("E1", lambda: 2, int)
+        pset.addEphemeralConstant("E1", functools.partial(int, 2), int)
 
         expr = gp.genFull(pset, min_=1, max_=1)
         ind = creator.IndTree(expr)
@@ -131,7 +132,7 @@ class Pickling(unittest.TestCase):
         self.assertEqual(pop[2], pop_l[2], "Unpickled individual list != pickled individual list")
         self.assertEqual(pop[2].fitness, pop_l[2].fitness, "Unpickled individual fitness != pickled individual fitness")
 
-
+    
     # @unittest.skipIf(platform.python_implementation() == "PyPy", "PyPy support for pickling ndarrays (thus stats) is very unstable.")
     def test_pickle_logbook(self):
         stats = tools.Statistics()

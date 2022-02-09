@@ -19,6 +19,8 @@ import math
 
 import numpy
 
+from functools import partial
+
 from deap import base
 from deap import creator
 from deap import gp
@@ -69,7 +71,7 @@ pset.addPrimitive(protectedDiv, 2)
 pset.addPrimitive(operator.neg, 1)
 pset.addPrimitive(math.cos, 1)
 pset.addPrimitive(math.sin, 1)
-pset.addEphemeralConstant("rand101", lambda: random.randint(-1, 1))
+pset.addEphemeralConstant("rand101", partial(random.randint, -1, 1))
 pset.addADF(adfset0)
 pset.addADF(adfset1)
 pset.addADF(adfset2)
@@ -118,7 +120,7 @@ toolbox.register('mutate', gp.mutUniform, expr=toolbox.expr)
 def main():
     random.seed(1024)
     ind = toolbox.individual()
-
+    
     pop = toolbox.population(n=100)
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -126,12 +128,12 @@ def main():
     stats.register("std", numpy.std)
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
-
+    
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
-
+    
     CXPB, MUTPB, NGEN = 0.5, 0.2, 40
-
+    
     # Evaluate the entire population
     for ind in pop:
         ind.fitness.values = toolbox.evaluate(ind)
@@ -140,13 +142,13 @@ def main():
     record = stats.compile(pop)
     logbook.record(gen=0, evals=len(pop), **record)
     print(logbook.stream)
-
+    
     for g in range(1, NGEN):
         # Select the offspring
         offspring = toolbox.select(pop, len(pop))
         # Clone the offspring
         offspring = [toolbox.clone(ind) for ind in offspring]
-
+    
         # Apply crossover and mutation
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
             for tree1, tree2 in zip(ind1, ind2):
@@ -160,23 +162,23 @@ def main():
                 if random.random() < MUTPB:
                     toolbox.mutate(individual=tree, pset=pset)
                     del ind.fitness.values
-
+                            
         # Evaluate the individuals with an invalid fitness
         invalids = [ind for ind in offspring if not ind.fitness.valid]
         for ind in invalids:
             ind.fitness.values = toolbox.evaluate(ind)
-
+                
         # Replacement of the population by the offspring
         pop = offspring
         hof.update(pop)
         record = stats.compile(pop)
         logbook.record(gen=g, evals=len(invalids), **record)
         print(logbook.stream)
-
+    
     print('Best individual : ', hof[0][0], hof[0].fitness)
-
+    
     return pop, stats, hof
-
+    
 if __name__ == "__main__":
     main()
 
